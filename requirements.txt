@@ -1,0 +1,4 @@
+# Runtime dependency for PDF export.
+# server.mjs invokes `render-pdf.py` via the `python3` on your PATH, so install
+# this into that same interpreter (system python3, or an activated venv).
+reportlab>=4.0

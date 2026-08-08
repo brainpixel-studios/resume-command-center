@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Shared token contract — THE SINGLE SOURCE OF TRUTH for GUI color.
+   tailwind.config.js maps each semantic Tailwind color to one of these vars via var(--color-*),
+   so a brand change happens HERE and nowhere else. The "extended" block names the in-between
+   shades this app also paints with (a richer neutral ramp than the platform's 3 — collapsible
+   later). GUI-only; render-pdf.py is unaffected.
+   (2026-07-21) */
+:root {
+  /* ── Canonical Resume Command Center tokens (mirror priv/design_system) ── */
+  --color-bg: #f8f7fc;                        /* page background */
+  --color-surface: #f1edfb;                   /* canonical surface (retained for parity) */
+  --color-panel: #ffffff;                     /* card / panel */
+  --color-heading: #1a0e38;                   /* headings, graphite */
+  --color-text: #3d2f70;                      /* body text */
+  --color-text-muted: #8876b2;                /* muted text / captions */
+  --color-accent: #8670d1;                    /* Resume Command Center lavender */
+  --color-accent-soft: rgba(134, 112, 209, 0.12);
+  --color-accent-strong: #755fbe;             /* accent hover */
+  --color-border: rgba(91, 66, 153, 0.18);    /* canonical border (retained for parity) */
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+  --shadow-soft: 0 10px 24px rgba(52, 35, 108, 0.07);
+  --shadow-card: 0 18px 38px rgba(52, 35, 108, 0.09);
+
+  /* ── RCC extended neutral ramp (shades the app renders; preserved exactly) ── */
+  --color-ink-strong: #291b54;                /* emphasis body text */
+  --color-ink-dim: #5f4f8c;                   /* secondary / dim text */
+  --color-ink-faint: #a394c6;                 /* faint text + icons */
+  --color-fill: #efeafb;                       /* faint surface fill */
+  --color-line: #e4dcf5;                       /* hairline border (app default) */
+  --color-line-strong: #d3c7ea;                /* stronger border */
+
+  /* ── Accent extended ── */
+  --color-accent-fill: #ece6ff;                /* soft accent fill (= Resume Command Center panel-alt) */
+  --color-accent-fill-faint: rgba(236, 230, 255, 0.3); /* accent fill @30% (prev. bg-opacity-30) */
+  --color-accent-line: #c9bce8;                /* accent border */
+
+  /* ── Semantic fills + lines ── */
+  --color-success-fill: #e7f2ec;
+  --color-success-line: #b9d9c6;
+  --color-success-line-soft: #d6e9dd;
+  --color-danger-soft: #c85a5a;                /* lighter danger text */
+  --color-danger-fill: #f8e9e9;
+  --color-danger-line: #f1d6d6;
+  --color-warning-strong: #7c3a08;             /* darker warning text */
+  --color-warning-fill: #f7efe3;
+  --color-warning-fill-strong: #efe0c6;
+  --color-warning-line: #e6cfa4;
+  --color-warning-line-strong: #d6b478;
+}
+
+/* Global readability scale: every Tailwind size is rem-based, so bumping the root font
+   size enlarges all text, padding, and rem widths (incl. the sidebar) proportionally.
+   16px -> 18px = +12.5%. (2026-07-20, operator: "make all the writing bigger") */
+html {
+  font-size: 18px;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* brand text selection */
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* Placeholder color. Tailwind Preflight hardwires this to theme('colors.gray.400'); with the
+   stock scale gone, restore the brand faint tone explicitly (matches the prior remap exactly). */
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-ink-faint);
+}

@@ -1,0 +1,4 @@
+# Development / test dependencies (the pytest suite for the PDF renderer).
+-r requirements.txt
+pytest>=8.0
+pypdf>=4.0
