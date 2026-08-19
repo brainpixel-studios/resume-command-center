@@ -25,6 +25,14 @@ describe('isAvailable', () => {
     expect(isAvailable(openai, { env: { OPENAI_API_KEY: 'sk-x' }, isOnPath: onPath([]) })).toBe(true);
     expect(isAvailable(openai, { env: {}, isOnPath: onPath([]) })).toBe(false);
   });
+  it('ollama: keyless, available iff its enabledEnv is set', () => {
+    // ollama has `keyEnv: null`, so isAvailable falls through the keyEnv branch to enabledEnv.
+    const ollama = getProvider('ollama');
+    expect(isAvailable(ollama, { env: { OLLAMA_MODEL: 'llama3.1' }, isOnPath: onPath([]) })).toBe(true);
+    expect(isAvailable(ollama, { env: {}, isOnPath: onPath([]) })).toBe(false);
+    // baseUrlEnv is NOT an availability signal — it only redirects buildOpenAIRequest's URL.
+    expect(isAvailable(ollama, { env: { OLLAMA_BASE_URL: 'http://box.local:11434/v1' }, isOnPath: onPath([]) })).toBe(false);
+  });
 });
 
 describe('listProviders', () => {
@@ -74,5 +82,22 @@ describe('buildOpenAIRequest', () => {
     });
     expect(req.body.model).toBe('gpt-4o-mini');
     expect(req.body.messages).toEqual([{ role: 'user', content: 'ask' }]);
+  });
+  it('ollama sends no Authorization header and honors a base-url override', () => {
+    const ollama = getProvider('ollama');
+    const req = buildOpenAIRequest(ollama, {
+      system: '', prompt: 'ask', env: { OLLAMA_MODEL: 'llama3.1' },
+    });
+    // A keyless provider must not emit `Bearer undefined` / `Bearer null`.
+    expect(req.headers).not.toHaveProperty('Authorization');
+    expect(req.url).toBe('http://127.0.0.1:11434/v1/chat/completions');
+    expect(req.body.model).toBe('llama3.1');
+
+    const overridden = buildOpenAIRequest(ollama, {
+      system: '', prompt: 'ask',
+      env: { OLLAMA_MODEL: 'llama3.1', OLLAMA_BASE_URL: 'http://box.local:11434/v1' },
+    });
+    expect(overridden.url).toBe('http://box.local:11434/v1/chat/completions');
+    expect(overridden.headers).not.toHaveProperty('Authorization');
   });
 });

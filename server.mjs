@@ -68,19 +68,23 @@ app.post('/complete', async (req, res) => {
     const { url, headers, body } = buildOpenAIRequest(provider, { system, prompt, env: process.env });
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 60_000);
-    let r;
+    // The timeout must span the body reads, not just the headers. fetch() resolves as soon
+    // as response headers arrive, so clearing the timer at that point would leave r.text()
+    // and r.json() unbounded — a vendor that sends headers and then stalls mid-body would
+    // hang the request indefinitely, not merely overrun 60s. The shared controller.signal
+    // aborts an in-flight body read, and the catch below maps AbortError to 504.
     try {
-      r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+      const r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+      if (!r.ok) {
+        const detail = (await r.text()).slice(0, 500);
+        return res.status(502).json({ error: `${provider.label} request failed (${r.status})`, detail });
+      }
+      const j = await r.json();
+      const text = j.choices?.[0]?.message?.content?.trim() ?? '';
+      return res.json({ text, provider: provider.id });
     } finally {
       clearTimeout(timer);
     }
-    if (!r.ok) {
-      const detail = (await r.text()).slice(0, 500);
-      return res.status(502).json({ error: `${provider.label} request failed (${r.status})`, detail });
-    }
-    const j = await r.json();
-    const text = j.choices?.[0]?.message?.content?.trim() ?? '';
-    return res.json({ text, provider: provider.id });
   } catch (err) {
     console.error(`Provider ${provider.id} error:`, err.stderr?.trim() || err.code || err.name);
     if (err.killed || err.name === 'AbortError') return res.status(504).json({ error: `${provider.label} timed out (60s)` });
